@@ -71,7 +71,6 @@ for i in range(len(titles)):
 
 doc.save('나희덕 시 전집.docx')
 
-print (type(doc.settings))
 #### 제목.txt 생성
 '''
 idx = 0
