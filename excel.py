@@ -7,79 +7,54 @@ from docx.enum.style import WD_STYLE_TYPE ## 스타일
 from docx.shared import Mm
 from docx.shared import Pt
 
+import os, sys
+#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+from poet_make import *
+
 # run._element.rPr.rFonts.set(qn('w:eastAsia'), '휴먼명조') 한글 글꼴 설정
+
+def rename(old_dict,old_name,new_name):
+    new_dict = {}
+    for key,value in zip(old_dict.keys(),old_dict.values()):
+        new_key = key if key != old_name else new_name
+        new_dict[new_key] = old_dict[key]
+    return new_dict
 
 p = pd.read_excel('./poet.xlsx')
 
-titles = p['title']
-contents = p['poet']
+poetries = p['시집']
+
+titles_ex = p['제목']
+contents = p['시']
+titles = []
 
 ###title strip
-print (len(titles))
-for i in range(len(titles)):
-    titles[i] = str(titles[i]).strip()
-    
+
+for i in range(len(titles_ex)):
+    titles.append(str(titles_ex[i]).strip())
+
+### make title list to dict
+titles_content = dict.fromkeys(titles, '')
+
+
+for title,_ in titles_content.items():
+    idx = titles.index(title)
+    content = str(contents[idx])
+    content = content.replace(title, '', 1)
+    content = content.strip()
+
+    if(titles_content[title] == ''):
+        titles_content[title] += content
+    if str(poetries[idx]) != 'nan':
+        titles_content = rename(titles_content, title, title + ' [' + str(poetries[idx]) + ']')
+'''   
 ### 내용 앞뒤 공백 제거
 for i in range(len(contents)):
     contents[i] = str(contents[i])
-    contents[i] = contents[i].replace(titles[i], '')
+    contents[i] = contents[i].replace(titles[i], '', 1)
     contents[i] = (contents[i]).strip()
+'''
+#doc = make_docx_list(title, content)
 
-doc = docx.Document()
-doc.add_heading('나희덕 시 전집', 0)
-
-### 문서 기본 설정 ###
-section = doc.sections[0]
-section.page_width = Mm(148)
-section.page_heiht = Mm(225)
-
-section.top_margin = Mm(10)
-section.bottom_margin = Mm(10)
-
-section.left_margin = Mm(15)
-section.right_margin = Mm(15)
-
-section.header_distance = Mm(10)
-section.footer_distance = Mm(10)
-##################
-
-### 문서 스타일 생성 ###
-styles = doc.styles
-
-title_style = styles.add_style('시 제목',WD_STYLE_TYPE.PARAGRAPH)
-title_style.font.name = '나눔고딕 ExtraBold'
-title_style._element.rPr.rFonts.set(qn('w:eastAsia'), '나눔고딕 ExtraBold')
-title_style.font.size = Pt(12)
-
-content_style = styles.add_style('시 본문',WD_STYLE_TYPE.PARAGRAPH)
-content_style.font.name = '나눔 명조'
-content_style._element.rPr.rFonts.set(qn('w:eastAsia'), '나눔 명조')
-content_style.font.size = Pt(11)
-####################
-
-for i in range(len(titles)):
-    ### 제목 ###
-    doc.add_paragraph(titles[i] + '\n', style = title_style).bold = True
-    last_paragraph = doc.paragraphs[-1] 
-    last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    #### 내용 ###
-    doc.add_paragraph(contents[i] + '\n\n', style = content_style)
-    
-    ### 페이지 넘어가기 ####
-    doc.add_page_break()
-
+doc = make_docx_dict(titles_content)
 doc.save('나희덕 시 전집.docx')
-
-#### 제목.txt 생성
-'''
-idx = 0
-for title in titles:
-    if '/' not in str(title):
-        f = open('./poets/'+str(title) + '.txt', mode = 'w')
-        f.write(str(contents[idx]))
-        idx +=1
-    else:
-        print (title)
-        idx += 1
-'''
